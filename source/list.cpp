@@ -31,8 +31,8 @@ int ListDtor(List *list)
     LIST_VER(list, EXIT_FAILURE);
 
     free(list->data);
+    list->data = NULL;
 
-    list->data     = NULL;
     list->size     = ULLONG_MAX;
     list->capacity = 0;
     list->free     = 0;
@@ -93,8 +93,9 @@ size_t ListAppend(List *list, const size_t id, const data_t val)
 
     list->data[free               ].next = list->data[id].next;
     list->data[list->data[id].next].prev = (ssize_t)free;
-    list->data[id                 ].next = free;
-    list->data[free               ].prev = (ssize_t)id;
+
+    list->data[id  ].next = free;
+    list->data[free].prev = (ssize_t)id;
 
     list->size++;
 
@@ -102,6 +103,7 @@ size_t ListAppend(List *list, const size_t id, const data_t val)
 
     return free;
 }
+
 
 int ListDelete(List *list, const size_t id, data_t *val)
 {
@@ -125,6 +127,7 @@ int ListDelete(List *list, const size_t id, data_t *val)
     return EXIT_SUCCESS;
 }
 
+
 size_t ListSearch(List *const list, const data_t val)
 {
     LIST_VER(list, 0);
@@ -136,6 +139,7 @@ size_t ListSearch(List *const list, const data_t val)
 
     return 0;
 }
+
 
 size_t GetPos(List *const list, const size_t ord_pos)
 {
@@ -151,6 +155,7 @@ size_t GetPos(List *const list, const size_t ord_pos)
 
     return pos;
 }
+
 
 static void ListText(List *const list, const char *path, const char *file, const char *func, const int line, const int img_num) //TODO cringe
 {
@@ -224,20 +229,20 @@ static void ListDot(List *list, const char *const path)
                                                                                                                              list->data[0].next,
                                                                                                                              list->size,
                                                                                                                              list->capacity);
-    for(size_t i = 0; i <= list->capacity; i++) //generating nodes
+    for(size_t i = 0; i <= list->capacity; i++)
     {
         fprintf(graph, "node%zu[label = \"<prev> p:%zd | <id> id: %zu | <val> val: " DTS " | <next> n:%zu\"];\n", i,
         list->data[i].prev , i, list->data[i].val, list->data[i].next);
     }
 
-    for(size_t i = 1; i <= list->capacity; i++) //generating linear structure
+    for(size_t i = 1; i <= list->capacity; i++)
     {
         fprintf(graph, "node%zu -> node%zu[style=\"invis\"; weight = 100];\n", i - 1, i);
     }
 
-    for(size_t i = 0; i <= list->capacity; i++) //generating edges
+    for(size_t i = 0; i <= list->capacity; i++)
     {
-        if(list->data[i].prev == EOF) //free blocks
+        if(list->data[i].prev == EOF)
         {
             if(list->data[i].next <= list->capacity)
             {
@@ -277,12 +282,8 @@ void ListDump(List *list, const char *const file, const char *const func, const 
 }
 
 #ifdef PROTECT
-int ListVer(List *const list)
+static int TailHeadVer(List *const list)
 {
-    ASSERT(list && list->data && list->data[0].val == DATA_MAX, return EXIT_FAILURE);
-    ASSERT(list->size <= list->capacity && list->capacity != 0, return EXIT_FAILURE);
-    ASSERT(list->free != 0 && list->free <= list->capacity    , return EXIT_FAILURE);
-
     size_t tail_pos    = 0;
     size_t tails_count = 0;
 
@@ -294,19 +295,34 @@ int ListVer(List *const list)
         if(list->data[i].next == 0) {head_pos = i; heads_count++;}
         if(list->data[i].prev == 0) {tail_pos = i; tails_count++;}
     }
-    ASSERT( tail_pos ==         list->data[0].next && tails_count == 1 &&
-            head_pos == (size_t)list->data[0].prev && heads_count == 1, return EXIT_FAILURE);
+    ASSERT(tail_pos == list->data[0].next         && tails_count == 1, return EXIT_FAILURE);
+    ASSERT(head_pos == (size_t)list->data[0].prev && heads_count == 1, return EXIT_FAILURE);
+
+    return EXIT_SUCCESS;
+}
+
+static int CycleVer(List *const list)
+{
+    size_t cur_pos = list->data[0].next;
+    size_t head    = (size_t)list->data[0].prev;
 
     for(size_t i = 1; i < list->size; i++)
     {
-        ASSERT(tail_pos != head_pos && list->data[tail_pos].next <= list->capacity, return EXIT_FAILURE);
-        ASSERT(list->data[list->data[tail_pos].next].prev == (ssize_t)tail_pos    , return EXIT_FAILURE);
+        ASSERT(cur_pos != head && list->data[cur_pos].next <= list->capacity, return EXIT_FAILURE);
+        ASSERT(list->data[list->data[cur_pos].next].prev == (ssize_t)cur_pos, return EXIT_FAILURE);
 
-        tail_pos = list->data[tail_pos].next;
+        cur_pos = list->data[cur_pos].next;
     }
-    ASSERT(tail_pos == head_pos, return EXIT_FAILURE);
 
+    ASSERT(cur_pos == head, return EXIT_FAILURE);
+
+    return EXIT_SUCCESS;
+}
+
+static int FreeMemVer(List *const list)
+{
     size_t free_pos = list->free;
+
     for(size_t i = 1; i < list->capacity - list->size; i++)
     {
         ASSERT(list->data[free_pos].val  == 0   &&
@@ -315,9 +331,23 @@ int ListVer(List *const list)
 
         free_pos = list->data[free_pos].next;
     }
+
     ASSERT(list->data[free_pos].val  == 0   &&
            list->data[free_pos].prev == EOF &&
            list->data[free_pos].next == list->capacity + 1, return EXIT_FAILURE);
+
+    return EXIT_SUCCESS;
+}
+
+int ListVer(List *const list)
+{
+    ASSERT(list && list->data && list->data[0].val == DATA_MAX, return EXIT_FAILURE);
+    ASSERT(list->size <= list->capacity && list->capacity != 0, return EXIT_FAILURE);
+    ASSERT(list->free != 0 && list->free <= list->capacity    , return EXIT_FAILURE);
+
+    EXEC_ASSERT(!TailHeadVer(list), return EXIT_FAILURE);
+    EXEC_ASSERT(!CycleVer(list)   , return EXIT_FAILURE);
+    EXEC_ASSERT(!FreeMemVer(list) , return EXIT_FAILURE);
 
     return EXIT_SUCCESS;
 }

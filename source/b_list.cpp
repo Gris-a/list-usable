@@ -108,7 +108,7 @@ List_t *GetPos(struct List_t *const list, const size_t ord_pos)
     return pos;
 }
 
-void ListDump(List_t *const list)
+void ListDump(List_t *const list) //TODO cringe
 {
     ASSERT(list, return);
 
