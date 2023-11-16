@@ -152,7 +152,7 @@ size_t GetPos(List *const list, const size_t ord_pos)
     return pos;
 }
 
-static void ListText(List *const list, const char *const path, const char *const file, const char *const func, const int line, const int img_num)
+static void ListText(List *const list, const char *path, const char *file, const char *func, const int line, const int img_num) //TODO cringe
 {
     ASSERT(file && func, return);
 
@@ -161,7 +161,6 @@ static void ListText(List *const list, const char *const path, const char *const
 
     fprintf(html, "<body bgcolor=\"000000\"><pre>\n");
     fprintf(html, color_white("Called from %s:%s:%d\n\n"), file, func, line);
-
     fprintf(html, color_white("LIST[%p]:       \n"
                               "\tsize:    %5zu,\n"
                               "\tcapacity:%5zu,\n"
