@@ -1,10 +1,13 @@
 #ifndef B_LIST_H
 #define B_LIST_H
 
+#include <limits.h>
+
 #include "log.h"
 
 typedef int data_t;
 #define DTS "%14d"
+#define DATA_MAX INT_MAX
 
 struct List_t
 {
@@ -31,6 +34,10 @@ struct List_t
 List_t ListCtor(void);
 
 int ListDtor(List_t *list);
+
+List_t *ListHead(List_t *list);
+
+List_t *ListTail(List_t *list);
 
 List_t *ListAppend(List_t *list, List_t *prev_p, const data_t val);
 

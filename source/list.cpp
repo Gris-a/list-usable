@@ -39,6 +39,20 @@ int ListDtor(List *list)
     return EXIT_SUCCESS;
 }
 
+ssize_t ListHead(List *list)
+{
+    LIST_VER(list, -1);
+
+    return list->data[0].prev;
+}
+
+size_t ListTail(List *list)
+{
+    LIST_VER(list, ULLONG_MAX);
+
+    return list->data[0].next;
+}
+
 static int ExpList(List *list)
 {
     Block *new_data = (Block *)realloc(list->data, sizeof(Block) * (list->capacity * 2 + 1));
@@ -107,7 +121,7 @@ size_t ListSearch(List *const list, const data_t val)
 {
     LIST_VER(list, 0);
 
-    for(size_t pos = list->data[0].next; pos; pos = list->data[pos].next)
+    for(size_t pos = ListTail(list); pos; pos = list->data[pos].next)
     {
         if(list->data[pos].val == val) return pos;
     }
@@ -121,7 +135,7 @@ size_t GetPos(List *const list, const size_t ord_pos)
 
     ASSERT(ord_pos < list->size, return 0);
 
-    size_t pos = list->data[0].next;
+    size_t pos = ListTail(list);
     for(size_t i = 0; i < ord_pos; i++)
     {
         pos = list->data[pos].next;
@@ -144,8 +158,8 @@ void ListDump(List *const list)
     fprintf(stderr, "\t\033[91m[NULL]\033[0m\t");
     for(size_t i = 1; i <= list->capacity; i++)
     {
-             if(i ==         list->data[0].next) fprintf(stderr, "\033[94m[TAIL]\033[0m\t");
-        else if(i == (size_t)list->data[0].prev) fprintf(stderr, "\033[95m[HEAD]\033[0m\t");
+             if(i ==         ListTail(list)) fprintf(stderr, "\033[94m[TAIL]\033[0m\t");
+        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\033[95m[HEAD]\033[0m\t");
         else if(i ==         list->free        ) fprintf(stderr, "\033[93m[FREE]\033[0m\t");
         else fprintf(stderr, "\t");
     }
@@ -154,8 +168,8 @@ void ListDump(List *const list)
     fprintf(stderr, "\t\040\033[91m%4d\033[0m \t", 0);
     for(size_t i = 1; i <= list->capacity; i++)
     {
-             if(i ==         list->data[0].next) fprintf(stderr, "\040\033[94m%4zu\033[0m\040\t", i);
-        else if(i == (size_t)list->data[0].prev) fprintf(stderr, "\040\033[95m%4zu\033[0m\040\t", i);
+             if(i ==         ListTail(list)) fprintf(stderr, "\040\033[94m%4zu\033[0m\040\t", i);
+        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\040\033[95m%4zu\033[0m\040\t", i);
         else if(list->data[i].prev == EOF      ) fprintf(stderr, "\040\033[93m%4zu\033[0m\040\t", i);
         else                                     fprintf(stderr, "\040\033[92m%4zu\033[0m\040\t", i);
     }
@@ -164,28 +178,28 @@ void ListDump(List *const list)
     fprintf(stderr, "DATA:\t\033[91m[" DTS "]\033[0m\t", list->data[0].val);
     for(size_t i = 1; i <= list->capacity; i++)
     {
-             if(i ==         list->data[0].next) fprintf(stderr, "\033[94m[" DTS "]\033[0m\t", list->data[i].val);
-        else if(i == (size_t)list->data[0].prev) fprintf(stderr, "\033[95m[" DTS "]\033[0m\t", list->data[i].val);
+             if(i ==         ListTail(list)) fprintf(stderr, "\033[94m[" DTS "]\033[0m\t", list->data[i].val);
+        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\033[95m[" DTS "]\033[0m\t", list->data[i].val);
         else if(list->data[i].prev == EOF      ) fprintf(stderr, "\033[93m[" DTS "]\033[0m\t", list->data[i].val);
         else                                     fprintf(stderr, "\033[92m[" DTS "]\033[0m\t", list->data[i].val);
     }
     fprintf(stderr, "\n\n");
 
-    fprintf(stderr, "NEXT:\t\033[91m[%4zu]\033[0m\t", list->data[0].next);
+    fprintf(stderr, "NEXT:\t\033[91m[%4zu]\033[0m\t", ListTail(list));
     for(size_t i = 1; i <= list->capacity; i++)
     {
-             if(i ==         list->data[0].next) fprintf(stderr, "\033[94m[%4zu]\033[0m\t", list->data[i].next);
-        else if(i == (size_t)list->data[0].prev) fprintf(stderr, "\033[95m[%4zu]\033[0m\t", list->data[i].next);
+             if(i ==         ListTail(list)) fprintf(stderr, "\033[94m[%4zu]\033[0m\t", list->data[i].next);
+        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\033[95m[%4zu]\033[0m\t", list->data[i].next);
         else if(list->data[i].prev == EOF      ) fprintf(stderr, "\033[93m[%4zu]\033[0m\t", list->data[i].next);
         else                                     fprintf(stderr, "\033[92m[%4zu]\033[0m\t", list->data[i].next);
     }
     fprintf(stderr, "\n\n");
 
-    fprintf(stderr, "PREV:\t\033[91m[%4zd]\033[0m\t", list->data[0].prev);
+    fprintf(stderr, "PREV:\t\033[91m[%4zd]\033[0m\t", ListHead(list));
     for(size_t i = 1; i <= list->capacity; i++)
     {
-             if(i ==         list->data[0].next) fprintf(stderr, "\033[94m[%4zd]\033[0m\t", list->data[i].prev);
-        else if(i == (size_t)list->data[0].prev) fprintf(stderr, "\033[95m[%4zd]\033[0m\t", list->data[i].prev);
+             if(i ==         ListTail(list)) fprintf(stderr, "\033[94m[%4zd]\033[0m\t", list->data[i].prev);
+        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\033[95m[%4zd]\033[0m\t", list->data[i].prev);
         else if(list->data[i].prev == EOF      ) fprintf(stderr, "\033[93m[FREE]\033[0m\t");
         else                                     fprintf(stderr, "\033[92m[%4zd]\033[0m\t", list->data[i].prev);
     }
@@ -194,19 +208,22 @@ void ListDump(List *const list)
 
 void ListDot(List *list)
 {
+    static int num = 0;
     ASSERT(list, return);
 
-    FILE *graph = fopen("a.dot", "w");
+    char name[1000] = {};
+    sprintf(name, "dump/source/list_dump%d.dot", num);
+    FILE *graph = fopen(name, "w");
 
-    fprintf(graph, "digraph            \n"
-                   "{                  \n"
+    fprintf(graph, "digraph             \n"
+                   "{                   \n"
                    "bgcolor =\"#766B6B\"\n"
-                   "ranksep = equally  \n"
-                   "node[shape = Mrecord; style=filled; fillcolor=\"orchid\"];\n");
+                   "ranksep = equally   \n"
+                   "node[shape = Mrecord; style=filled; fillcolor=\"gray\"];\n");
 
-    fprintf(graph, "nodel[label = \"free: %zu|{head: %zd|tail: %zu}|{size: %zu|capacity: %zu}\";weight = 0]\n", list->free,
-                                                                                                                list->data[0].prev,
-                                                                                                                list->data[0].next,
+    fprintf(graph, "nodel[label = \"free: %zu|{head: %zd|tail: %zu}|{size: %zu|capacity: %zu}\"; fillcolor = \"orchid\"]\n", list->free,
+                                                                                                                ListHead(list),
+                                                                                                                ListTail(list),
                                                                                                                 list->size,
                                                                                                                 list->capacity);
     for(size_t i = 0; i <= list->capacity; i++)
@@ -237,7 +254,16 @@ void ListDot(List *list)
 
     fprintf(graph, "}\n");
     fclose(graph);
-    system("dot a.dot -T png -o a.png");
+
+    sprintf(name, "dump/html/list_dump%d.html", num);
+    FILE *html = fopen(name, "wb");
+    fprintf(html, "<img src=\"../img/list_dump%d.png\"/>", num);
+    fclose(html);
+
+    sprintf(name, "dot dump/source/list_dump%d.dot -T png -o dump/img/list_dump%d.png", num, num);
+    system(name);
+
+    num++;
 }
 
 #ifdef PROTECT

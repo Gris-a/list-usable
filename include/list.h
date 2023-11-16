@@ -40,6 +40,10 @@ List ListCtor(const size_t capasity = 2);
 
 int ListDtor(List *list);
 
+ssize_t ListHead(List *list);
+
+size_t ListTail(List *list);
+
 size_t ListAppend(List *list, const size_t id, const data_t val);
 
 int ListDelete(List *list, const size_t id, data_t *val = NULL);

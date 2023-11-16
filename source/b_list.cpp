@@ -7,7 +7,7 @@ List_t ListCtor(void)
 {
     List_t list = {};
 
-    list.val  = 0;
+    list.val  = DATA_MAX;
     list.prev = &list;
     list.next = &list;
 
@@ -25,6 +25,20 @@ int ListDtor(List_t *list)
     list->next = NULL;
 
     return EXIT_SUCCESS;
+}
+
+List_t *ListHead(List_t *list)
+{
+    LIST_VER(list, NULL);
+
+    return list->prev;
+}
+
+List_t *ListTail(List_t *list)
+{
+    LIST_VER(list, NULL);
+
+    return list->next;
 }
 
 List_t *ListAppend(struct List_t *list, List_t *prev_p, const data_t val)
@@ -140,8 +154,9 @@ void ListDump(List_t *const list)
 #ifdef PROTECT
 int ListVer(List_t *const list)
 {
-    ASSERT(list      , return EXIT_FAILURE);
-    ASSERT(list->next, return EXIT_FAILURE);
+    ASSERT(list                 , return EXIT_FAILURE);
+    ASSERT(list->val == DATA_MAX, return EXIT_FAILURE);
+    ASSERT(list->next           , return EXIT_FAILURE);
 
     for(List_t *i = list->next; i != list; i = i->next)
     {
