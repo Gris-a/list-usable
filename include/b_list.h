@@ -4,6 +4,7 @@
 #include <limits.h>
 
 #include "log.h"
+#include "colors.h"
 
 typedef int data_t;
 #define DTS "%14d"

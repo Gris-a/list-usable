@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
 #include "../include/list.h"
 
@@ -17,6 +16,7 @@ List ListCtor(const size_t capacity)
     list.data = (Block *)calloc(capacity + 1, sizeof(Block));
     ASSERT(list.data, return {});
 
+    list.data[0].val = DATA_MAX;
     for(size_t i = 1; i <= capacity; i++)
     {
         list.data[i].next = i + 1;
@@ -32,6 +32,7 @@ int ListDtor(List *list)
 
     free(list->data);
 
+    list->data     = NULL;
     list->size     = ULLONG_MAX;
     list->capacity = 0;
     list->free     = 0;
@@ -39,9 +40,10 @@ int ListDtor(List *list)
     return EXIT_SUCCESS;
 }
 
+
 ssize_t ListHead(List *list)
 {
-    LIST_VER(list, -1);
+    LIST_VER(list, EOF);
 
     return list->data[0].prev;
 }
@@ -53,21 +55,27 @@ size_t ListTail(List *list)
     return list->data[0].next;
 }
 
+
 static int ExpList(List *list)
 {
-    Block *new_data = (Block *)realloc(list->data, sizeof(Block) * (list->capacity * 2 + 1));
-    ASSERT(new_data, return EXIT_FAILURE);
-
-    list->data = new_data;
-
-    for(size_t i = list->capacity + 1; i < 2 * list->capacity + 1; i++)
+    if(list->size == list->capacity)
     {
-        list->data[i].val  = 0;
-        list->data[i].next = i + 1;
-        list->data[i].prev = EOF;
-    }
+        ASSERT(list->capacity <= ULLONG_MAX / 2, return EXIT_FAILURE);
 
-    list->capacity *= 2;
+        Block *new_data = (Block *)realloc(list->data, sizeof(Block) * (list->capacity * 2 + 1));
+        ASSERT(new_data, return EXIT_FAILURE);
+
+        list->data = new_data;
+
+        for(size_t i = list->capacity + 1; i < 2 * list->capacity + 1; i++)
+        {
+            list->data[i].val  = 0;
+            list->data[i].next = i + 1;
+            list->data[i].prev = EOF;
+        }
+
+        list->capacity *= 2;
+    }
 
     return EXIT_SUCCESS;
 }
@@ -90,7 +98,7 @@ size_t ListAppend(List *list, const size_t id, const data_t val)
 
     list->size++;
 
-    EXEC_ASSERT(!(list->size == list->capacity && ExpList(list)), return 0);
+    EXEC_ASSERT(!ExpList(list), return 0);
 
     return free;
 }
@@ -121,7 +129,7 @@ size_t ListSearch(List *const list, const data_t val)
 {
     LIST_VER(list, 0);
 
-    for(size_t pos = ListTail(list); pos; pos = list->data[pos].next)
+    for(size_t pos = ListTail(list); pos != 0; pos = list->data[pos].next)
     {
         if(list->data[pos].val == val) return pos;
     }
@@ -144,76 +152,67 @@ size_t GetPos(List *const list, const size_t ord_pos)
     return pos;
 }
 
-void ListDump(List *const list)
+static void ListText(List *const list, const char *const path, const char *const file, const char *const func, const int line, const int img_num)
 {
-    ASSERT(list, return);
+    ASSERT(file && func, return);
 
-    fprintf(stderr, "LIST[%p]:       \n"
-                    "\tsize:    %5zu,\n"
-                    "\tcapacity:%5zu,\n"
-                    "\n", list, list->size, list->capacity);
+    FILE *html = fopen(path, "wb");
+    ASSERT(html, return);
+
+    fprintf(html, "<body bgcolor=\"000000\"><pre>\n");
+    fprintf(html, color_white("Called from %s:%s:%d\n\n"), file, func, line);
+
+    fprintf(html, color_white("LIST[%p]:       \n"
+                              "\tsize:    %5zu,\n"
+                              "\tcapacity:%5zu,\n"
+                              "\n"), list, list->size, list->capacity);
 
     ASSERT(list->data, return);
 
-    fprintf(stderr, "\t\033[91m[NULL]\033[0m\t");
+    fprintf(html, color_red("\t[      NULL]\t"));
     for(size_t i = 1; i <= list->capacity; i++)
     {
-             if(i ==         ListTail(list)) fprintf(stderr, "\033[94m[TAIL]\033[0m\t");
-        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\033[95m[HEAD]\033[0m\t");
-        else if(i ==         list->free        ) fprintf(stderr, "\033[93m[FREE]\033[0m\t");
-        else fprintf(stderr, "\t");
+             if(i ==         list->data[0].next) fprintf(html, color_blue  ("[      TAIL]\t"));
+        else if(i == (size_t)list->data[0].prev) fprintf(html, color_purple("[      HEAD]\t"));
+        else if(i ==         list->free        ) fprintf(html, color_yellow("[      FREE]\t"));
+        else                                     fprintf(html, "\t\t");
     }
-    fprintf(stderr, "\n\n");
+    fprintf(html, "\n\n\t");
 
-    fprintf(stderr, "\t\040\033[91m%4d\033[0m \t", 0);
-    for(size_t i = 1; i <= list->capacity; i++)
-    {
-             if(i ==         ListTail(list)) fprintf(stderr, "\040\033[94m%4zu\033[0m\040\t", i);
-        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\040\033[95m%4zu\033[0m\040\t", i);
-        else if(list->data[i].prev == EOF      ) fprintf(stderr, "\040\033[93m%4zu\033[0m\040\t", i);
-        else                                     fprintf(stderr, "\040\033[92m%4zu\033[0m\040\t", i);
-    }
-    fprintf(stderr, "\n\n");
+#define DUMP_COLORED(format, iterator, val) for(size_t iterator = 1; iterator <= list->capacity; iterator++)\
+                                            {\
+                                                     if(iterator ==         list->data[0].next) fprintf(html, color_blue  (format), val);\
+                                                else if(iterator == (size_t)list->data[0].prev) fprintf(html, color_purple(format), val);\
+                                                else if(list->data[iterator].prev == EOF      ) fprintf(html, color_yellow(format), val);\
+                                                else                                            fprintf(html, color_green (format), val);\
+                                            }\
+                                            fprintf(html, "\n\n");
 
-    fprintf(stderr, "DATA:\t\033[91m[" DTS "]\033[0m\t", list->data[0].val);
-    for(size_t i = 1; i <= list->capacity; i++)
-    {
-             if(i ==         ListTail(list)) fprintf(stderr, "\033[94m[" DTS "]\033[0m\t", list->data[i].val);
-        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\033[95m[" DTS "]\033[0m\t", list->data[i].val);
-        else if(list->data[i].prev == EOF      ) fprintf(stderr, "\033[93m[" DTS "]\033[0m\t", list->data[i].val);
-        else                                     fprintf(stderr, "\033[92m[" DTS "]\033[0m\t", list->data[i].val);
-    }
-    fprintf(stderr, "\n\n");
+    fprintf(html, color_red(" %10d \t"), 0);
+    DUMP_COLORED(" %10zu \t", iterator, iterator);
 
-    fprintf(stderr, "NEXT:\t\033[91m[%4zu]\033[0m\t", ListTail(list));
-    for(size_t i = 1; i <= list->capacity; i++)
-    {
-             if(i ==         ListTail(list)) fprintf(stderr, "\033[94m[%4zu]\033[0m\t", list->data[i].next);
-        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\033[95m[%4zu]\033[0m\t", list->data[i].next);
-        else if(list->data[i].prev == EOF      ) fprintf(stderr, "\033[93m[%4zu]\033[0m\t", list->data[i].next);
-        else                                     fprintf(stderr, "\033[92m[%4zu]\033[0m\t", list->data[i].next);
-    }
-    fprintf(stderr, "\n\n");
+    fprintf(html, color_white("DATA:\t"));
+    fprintf(html, color_red("[" DTS "]\t"), list->data[0].val);
+    DUMP_COLORED("[" DTS "]\t", iterator, list->data[iterator].val);
 
-    fprintf(stderr, "PREV:\t\033[91m[%4zd]\033[0m\t", ListHead(list));
-    for(size_t i = 1; i <= list->capacity; i++)
-    {
-             if(i ==         ListTail(list)) fprintf(stderr, "\033[94m[%4zd]\033[0m\t", list->data[i].prev);
-        else if(i == (size_t)ListHead(list)) fprintf(stderr, "\033[95m[%4zd]\033[0m\t", list->data[i].prev);
-        else if(list->data[i].prev == EOF      ) fprintf(stderr, "\033[93m[FREE]\033[0m\t");
-        else                                     fprintf(stderr, "\033[92m[%4zd]\033[0m\t", list->data[i].prev);
-    }
-    fprintf(stderr, "\n\n");
+    fprintf(html, color_white("NEXT:\t"));
+    fprintf(html, color_red("[%10zu]\t"), list->data[0].next);
+    DUMP_COLORED("[%10zu]\t", iterator, list->data[iterator].next);
+
+    fprintf(html, color_white("PREV:\t"));
+    fprintf(html, color_red("[%10zd]\t"), list->data[0].prev);
+    DUMP_COLORED("[%10zd]\t", iterator, list->data[iterator].prev);
+#undef DUMP
+
+    fprintf(html, "<img src=\"../img/list_dump%d.png\"/></body>", img_num);
+
+    fclose(html);
 }
 
-void ListDot(List *list)
+static void ListDot(List *list, const char *const path)
 {
-    static int num = 0;
-    ASSERT(list, return);
-
-    char name[1000] = {};
-    sprintf(name, "dump/source/list_dump%d.dot", num);
-    FILE *graph = fopen(name, "w");
+    FILE *graph = fopen(path, "wb");
+    ASSERT(graph, return);
 
     fprintf(graph, "digraph             \n"
                    "{                   \n"
@@ -222,24 +221,24 @@ void ListDot(List *list)
                    "node[shape = Mrecord; style=filled; fillcolor=\"gray\"];\n");
 
     fprintf(graph, "nodel[label = \"free: %zu|{head: %zd|tail: %zu}|{size: %zu|capacity: %zu}\"; fillcolor = \"orchid\"]\n", list->free,
-                                                                                                                ListHead(list),
-                                                                                                                ListTail(list),
-                                                                                                                list->size,
-                                                                                                                list->capacity);
-    for(size_t i = 0; i <= list->capacity; i++)
+                                                                                                                             list->data[0].prev,
+                                                                                                                             list->data[0].next,
+                                                                                                                             list->size,
+                                                                                                                             list->capacity);
+    for(size_t i = 0; i <= list->capacity; i++) //generating nodes
     {
         fprintf(graph, "node%zu[label = \"<prev> p:%zd | <id> id: %zu | <val> val: " DTS " | <next> n:%zu\"];\n", i,
         list->data[i].prev , i, list->data[i].val, list->data[i].next);
     }
 
-    for(size_t i = 1; i <= list->capacity; i++)
+    for(size_t i = 1; i <= list->capacity; i++) //generating linear structure
     {
         fprintf(graph, "node%zu -> node%zu[style=\"invis\"; weight = 100];\n", i - 1, i);
     }
 
-    for(size_t i = 0; i <= list->capacity; i++)
+    for(size_t i = 0; i <= list->capacity; i++) //generating edges
     {
-        if(list->data[i].prev == EOF)
+        if(list->data[i].prev == EOF) //free blocks
         {
             if(list->data[i].next <= list->capacity)
             {
@@ -253,15 +252,27 @@ void ListDot(List *list)
     }
 
     fprintf(graph, "}\n");
+
     fclose(graph);
+}
 
-    sprintf(name, "dump/html/list_dump%d.html", num);
-    FILE *html = fopen(name, "wb");
-    fprintf(html, "<img src=\"../img/list_dump%d.png\"/>", num);
-    fclose(html);
+void ListDump(List *list, const char *const file, const char *const func, const int line)
+{
+    static int num = 0;
 
-    sprintf(name, "dot dump/source/list_dump%d.dot -T png -o dump/img/list_dump%d.png", num, num);
-    system(name);
+    ASSERT(list && list->data, return);
+
+    char path[MAX_CMD_LEN] = {};
+
+    sprintf(path, "dump/source/list_dump%d.dot", num);
+    ListDot(list, path);
+
+    sprintf(path, "dump/html/list_dump%d.html", num);
+
+    ListText(list, path, file, func, line, num);
+
+    sprintf(path, "dot dump/source/list_dump%d.dot -T png -o dump/img/list_dump%d.png", num, num);
+    system(path);
 
     num++;
 }
@@ -269,7 +280,7 @@ void ListDot(List *list)
 #ifdef PROTECT
 int ListVer(List *const list)
 {
-    ASSERT(list && list->data && list->data[0].val == 0       , return EXIT_FAILURE);
+    ASSERT(list && list->data && list->data[0].val == DATA_MAX, return EXIT_FAILURE);
     ASSERT(list->size <= list->capacity && list->capacity != 0, return EXIT_FAILURE);
     ASSERT(list->free != 0 && list->free <= list->capacity    , return EXIT_FAILURE);
 

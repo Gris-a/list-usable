@@ -21,6 +21,7 @@ int ListDtor(List_t *list)
     for(List_t *pos = list->next->next; pos != list; pos = pos->next) free(pos->prev);
     free(list->prev);
 
+    list->val  = 0;
     list->prev = NULL;
     list->next = NULL;
 
@@ -83,7 +84,7 @@ List_t *ListSearch(List_t *const list, const data_t val)
 {
     LIST_VER(list, NULL);
 
-    for(List_t *pos = list->next; pos != list; pos = pos->next)
+    for(List_t *pos = ListTail(list); pos != list; pos = pos->next)
     {
         if(pos->val == val) return pos;
     }
@@ -95,7 +96,7 @@ List_t *GetPos(struct List_t *const list, const size_t ord_pos)
 {
     LIST_VER(list, NULL);
 
-    List_t *pos = list->next;
+    List_t *pos = ListTail(list);
 
     for(size_t i = 0; i < ord_pos; i++)
     {
@@ -113,40 +114,40 @@ void ListDump(List_t *const list)
 
     fprintf(stderr, "LIST[%p]:\n", list);
 
-    fprintf(stderr, "\t\040\033[91m%p\033[0m \t", list);
+    fprintf(stderr, color_red("\t %p \t"), list);
     for(List_t *i = list->next; i != list; i = i->next)
     {
         ASSERT(i, return);
-             if(i == list->next) fprintf(stderr, "\040\033[94m%p\033[0m\040\t", i);
-        else if(i == list->prev) fprintf(stderr, "\040\033[95m%p\033[0m\040\t", i);
-        else                     fprintf(stderr, "\040\033[92m%p\033[0m\040\t", i);
+             if(i == list->next) fprintf(stderr, color_blue  (" %p \t"), i);
+        else if(i == list->prev) fprintf(stderr, color_purple(" %p \t"), i);
+        else                     fprintf(stderr, color_green (" %p \t"), i);
     }
     fprintf(stderr, "\n\n");
 
-    fprintf(stderr, "DATA:\t\033[91m[" DTS "]\033[0m\t", list->val);
+    fprintf(stderr, "DATA:" color_red("\t[" DTS "]\t"), list->val);
     for(List_t *i = list->next; i != list; i = i->next)
     {
-             if(i == list->next) fprintf(stderr, "\033[94m[" DTS "]\033[0m\t", i->val);
-        else if(i == list->prev) fprintf(stderr, "\033[95m[" DTS "]\033[0m\t", i->val);
-        else                     fprintf(stderr, "\033[92m[" DTS "]\033[0m\t", i->val);
+             if(i == list->next) fprintf(stderr, color_blue  ("[" DTS "]\t"), i->val);
+        else if(i == list->prev) fprintf(stderr, color_purple("[" DTS "]\t"), i->val);
+        else                     fprintf(stderr, color_green ("[" DTS "]\t"), i->val);
     }
     fprintf(stderr, "\n\n");
 
-    fprintf(stderr, "NEXT:\t\033[91m[%4p]\033[0m\t", list->next);
+    fprintf(stderr, "NEXT:" color_red("\t[%4p]\t"), list->next);
     for(List_t *i = list->next; i != list; i = i->next)
     {
-             if(i == list->next) fprintf(stderr, "\033[94m[%p]\033[0m\t", i->next);
-        else if(i == list->prev) fprintf(stderr, "\033[95m[%p]\033[0m\t", i->next);
-        else                     fprintf(stderr, "\033[92m[%p]\033[0m\t", i->next);
+             if(i == list->next) fprintf(stderr, color_blue  ("[%p]\t"), i->next);
+        else if(i == list->prev) fprintf(stderr, color_purple("[%p]\t"), i->next);
+        else                     fprintf(stderr, color_green ("[%p]\t"), i->next);
     }
     fprintf(stderr, "\n\n");
 
-    fprintf(stderr, "PREV:\t\033[91m[%p]\033[0m\t", list->prev);
+    fprintf(stderr, "PREV:" color_red("\t[%p]\t"), list->prev);
     for(List_t *i = list->next; i != list; i = i->next)
     {
-             if(i == list->next) fprintf(stderr, "\033[94m[%p]\033[0m\t", i->prev);
-        else if(i == list->prev) fprintf(stderr, "\033[95m[%p]\033[0m\t", i->prev);
-        else                     fprintf(stderr, "\033[92m[%p]\033[0m\t", i->prev);
+             if(i == list->next) fprintf(stderr, color_blue  ("[%p]\t"), i->prev);
+        else if(i == list->prev) fprintf(stderr, color_purple("[%p]\t"), i->prev);
+        else                     fprintf(stderr, color_green ("[%p]\t"), i->prev);
     }
     fprintf(stderr, "\n\n");
 }
@@ -174,7 +175,7 @@ bool InList(List_t *const list, List_t *const elem)
     ASSERT(elem, return false);
 
     if(list == elem) return true;
-    for(List_t *i = list->next; i != list; i = i->next)
+    for(List_t *i = ListTail(list); i != list; i = i->next)
         if(i == elem) return true;
     return false;
 }

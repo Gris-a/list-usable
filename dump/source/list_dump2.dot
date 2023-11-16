@@ -1,7 +1,7 @@
-digraph            
-{                  
+digraph             
+{                   
 bgcolor ="#766B6B"
-ranksep = equally  
+ranksep = equally   
 node[shape = Mrecord; style=filled; fillcolor="gray"];
 nodel[label = "free: 6|{head: 2|tail: 5}|{size: 5|capacity: 8}"; fillcolor = "orchid"]
 node0[label = "<prev> p:2 | <id> id: 0 | <val> val:    0 | <next> n:5"];

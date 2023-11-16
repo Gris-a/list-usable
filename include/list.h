@@ -1,10 +1,18 @@
 #ifndef LIST_H
 #define LIST_H
 
+#include <limits.h>
+
 #include "log.h"
 
+#define HTML
+#include "colors.h"
+
 typedef int data_t;
-#define DTS "%4d"
+#define DTS "%10d"
+#define DATA_MAX INT_MAX
+
+const int MAX_CMD_LEN = 1000;
 
 struct Block
 {
@@ -22,13 +30,13 @@ struct List
     size_t size;
 };
 
-#define LIST_DUMP(list_ptr) LOG("%s:%s:%d:\n", __FILE__, __PRETTY_FUNCTION__, __LINE__);\
-                            ListDump(list_ptr)
+#define LIST_DUMP(list_ptr) LOG("Called from %s:%s:%d:\n", __FILE__, __PRETTY_FUNCTION__, __LINE__);\
+                            ListDump(list_ptr, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 
 #ifdef PROTECT
 #define LIST_VER(list_ptr, ret_val_on_fail) if(ListVer(list_ptr))\
                                             {\
-                                                LOG("%s:%s: Error: invalid list.\n", __FILE__, __PRETTY_FUNCTION__);\
+                                                LOG("Error: invalid list.\n");\
                                                 LIST_DUMP(list_ptr);\
                                                 return ret_val_on_fail;\
                                             }
@@ -52,9 +60,7 @@ size_t ListSearch(List *const list, const data_t val);
 
 size_t GetPos(List *const list, const size_t ord_pos);
 
-void ListDump(List *const list);
-
-void ListDot(List *list);
+void ListDump(List *list, const char *const file, const char *const func, const int line);
 
 #ifdef PROTECT
 int ListVer(List *const list);
