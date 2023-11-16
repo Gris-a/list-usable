@@ -206,7 +206,7 @@ static void ListText(List *const list, const char *path, const char *file, const
     fprintf(html, color_white("PREV:\t"));
     fprintf(html, color_red("[%10zd]\t"), list->data[0].prev);
     DUMP_COLORED("[%10zd]\t", iterator, list->data[iterator].prev);
-#undef DUMP
+#undef DUMP_COLORED
 
     fprintf(html, "<img src=\"../img/list_dump%d.png\"/></body>", img_num);
 

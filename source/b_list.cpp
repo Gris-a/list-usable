@@ -114,42 +114,30 @@ void ListDump(List_t *const list) //TODO cringe
 
     fprintf(stderr, "LIST[%p]:\n", list);
 
+#define DUMP_COLORED(format, iterator, val) for(List_t *iterator = list->next; iterator != list; iterator = iterator->next)\
+                                            {\
+                                                ASSERT(iterator, return);\
+                                                     if(iterator == list->next) fprintf(stderr, color_blue  (format), val);\
+                                                else if(iterator == list->prev) fprintf(stderr, color_purple(format), val);\
+                                                else                            fprintf(stderr, color_green (format), val);\
+                                            }\
+                                            fprintf(stderr, "\n\n");
+
     fprintf(stderr, color_red("\t %p \t"), list);
-    for(List_t *i = list->next; i != list; i = i->next)
-    {
-        ASSERT(i, return);
-             if(i == list->next) fprintf(stderr, color_blue  (" %p \t"), i);
-        else if(i == list->prev) fprintf(stderr, color_purple(" %p \t"), i);
-        else                     fprintf(stderr, color_green (" %p \t"), i);
-    }
-    fprintf(stderr, "\n\n");
+    DUMP_COLORED(" %p \t", iterator, iterator);
 
-    fprintf(stderr, "DATA:" color_red("\t[" DTS "]\t"), list->val);
-    for(List_t *i = list->next; i != list; i = i->next)
-    {
-             if(i == list->next) fprintf(stderr, color_blue  ("[" DTS "]\t"), i->val);
-        else if(i == list->prev) fprintf(stderr, color_purple("[" DTS "]\t"), i->val);
-        else                     fprintf(stderr, color_green ("[" DTS "]\t"), i->val);
-    }
-    fprintf(stderr, "\n\n");
+    fprintf(stderr, "DATA:");
+    fprintf(stderr, color_red("\t[" DTS "]\t"), list->val);
+    DUMP_COLORED("[" DTS "]\t", iterator, iterator->val);
 
-    fprintf(stderr, "NEXT:" color_red("\t[%4p]\t"), list->next);
-    for(List_t *i = list->next; i != list; i = i->next)
-    {
-             if(i == list->next) fprintf(stderr, color_blue  ("[%p]\t"), i->next);
-        else if(i == list->prev) fprintf(stderr, color_purple("[%p]\t"), i->next);
-        else                     fprintf(stderr, color_green ("[%p]\t"), i->next);
-    }
-    fprintf(stderr, "\n\n");
+    fprintf(stderr, "NEXT:");
+    fprintf(stderr, color_red("\t[%4p]\t"), list->next);
+    DUMP_COLORED("[%p]\t", iterator, iterator->next);
 
-    fprintf(stderr, "PREV:" color_red("\t[%p]\t"), list->prev);
-    for(List_t *i = list->next; i != list; i = i->next)
-    {
-             if(i == list->next) fprintf(stderr, color_blue  ("[%p]\t"), i->prev);
-        else if(i == list->prev) fprintf(stderr, color_purple("[%p]\t"), i->prev);
-        else                     fprintf(stderr, color_green ("[%p]\t"), i->prev);
-    }
-    fprintf(stderr, "\n\n");
+    fprintf(stderr, "PREV:");
+    fprintf(stderr, color_red("\t[%p]\t"), list->prev);
+    DUMP_COLORED("[%p]\t", iterator, iterator->prev);
+#undef DUMP_COLORED
 }
 
 #ifdef PROTECT
