@@ -2,16 +2,16 @@
 #define B_LIST_H
 
 #include <limits.h>
+#include <stdbool.h>
 
 #include "log.h"
 #include "colors.h"
 
 typedef int data_t;
-#define DTS "%14d"
+#define DATA_FORMAT "%14d"
 #define DATA_MAX INT_MAX
 
-struct List_t
-{
+struct List_t {
     data_t val;
 
     List_t *next;
@@ -22,14 +22,14 @@ struct List_t
                             ListDump(list_ptr)
 
 #ifdef PROTECT
-#define LIST_VER(list_ptr, ret_val_on_fail) if(ListVer(list_ptr))\
-                                            {\
-                                                LOG("%s:%s: Error: invalid list.\n", __FILE__, __PRETTY_FUNCTION__);\
-                                                LIST_DUMP(list_ptr);\
-                                                return ret_val_on_fail;\
-                                            }
+#define LIST_VERIFICATION(list_ptr, ret_val_on_fail) if(!IsListValid(list_ptr))\
+                                                     {\
+                                                         LOG("%s:%s: Error: invalid list.\n", __FILE__, __PRETTY_FUNCTION__);\
+                                                         LIST_DUMP(list_ptr);\
+                                                         return ret_val_on_fail;\
+                                                     }
 #else
-#define LIST_VER(...)
+#define LIST_VERIFICATION(...)
 #endif
 
 List_t ListCtor(void);
@@ -51,7 +51,7 @@ List_t *GetPos(List_t *const list, const size_t ord_pos);
 void ListDump(List_t *const list);
 
 #ifdef PROTECT
-int ListVer(List_t *const list);
+bool IsListValid(List_t *const list);
 
 bool InList(struct List_t *const list, List_t *const elem);
 #endif

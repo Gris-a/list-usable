@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include "../include/b_list.h"
 
@@ -16,7 +15,7 @@ List_t ListCtor(void)
 
 int ListDtor(List_t *list)
 {
-    LIST_VER(list, EXIT_FAILURE);
+    LIST_VERIFICATION(list, EXIT_FAILURE);
 
     for(List_t *pos = list->next->next; pos != list; pos = pos->next) free(pos->prev);
     free(list->prev);
@@ -30,21 +29,21 @@ int ListDtor(List_t *list)
 
 List_t *ListHead(List_t *list)
 {
-    LIST_VER(list, NULL);
+    LIST_VERIFICATION(list, NULL);
 
     return list->prev;
 }
 
 List_t *ListTail(List_t *list)
 {
-    LIST_VER(list, NULL);
+    LIST_VERIFICATION(list, NULL);
 
     return list->next;
 }
 
 List_t *ListAppend(struct List_t *list, List_t *prev_p, const data_t val)
 {
-    LIST_VER(list, NULL);
+    LIST_VERIFICATION(list, NULL);
 
     ASSERT(InList(list, prev_p), return NULL);
 
@@ -64,7 +63,7 @@ List_t *ListAppend(struct List_t *list, List_t *prev_p, const data_t val)
 
 int ListDelete(List_t *list, List_t *del_p, data_t *val)
 {
-    LIST_VER(list, EXIT_FAILURE);
+    LIST_VERIFICATION(list, EXIT_FAILURE);
 
     ASSERT(InList(list, del_p), return EXIT_FAILURE);
 
@@ -82,7 +81,7 @@ int ListDelete(List_t *list, List_t *del_p, data_t *val)
 
 List_t *ListSearch(List_t *const list, const data_t val)
 {
-    LIST_VER(list, NULL);
+    LIST_VERIFICATION(list, NULL);
 
     for(List_t *pos = ListTail(list); pos != list; pos = pos->next)
     {
@@ -94,7 +93,7 @@ List_t *ListSearch(List_t *const list, const data_t val)
 
 List_t *GetPos(struct List_t *const list, const size_t ord_pos)
 {
-    LIST_VER(list, NULL);
+    LIST_VERIFICATION(list, NULL);
 
     List_t *pos = ListTail(list);
 
@@ -108,63 +107,110 @@ List_t *GetPos(struct List_t *const list, const size_t ord_pos)
     return pos;
 }
 
-void ListDump(List_t *const list) //TODO cringe
+static void ListIndexDump(List_t *list)
+{
+    fprintf(stderr, color_red(" %p \t"), list);
+
+    for(List_t *p = list->next; p != list; p = p->next)
+    {
+        ASSERT(p, return);
+             if(p == list->next) fprintf(stderr, color_blue  (" %p \t"), p);
+        else if(p == list->prev) fprintf(stderr, color_purple(" %p \t"), p);
+        else                     fprintf(stderr, color_green (" %p \t"), p);
+    }
+
+    fprintf(stderr, "\n\n");
+}
+static void ListValDump(List_t *list)
+{
+    fprintf(stderr, "DATA:\t");
+    fprintf(stderr, color_red("[" DATA_FORMAT "]\t"), list->val);
+
+    for(List_t *p = list->next; p != list; p = p->next)
+    {
+        ASSERT(p, return);
+             if(p == list->next) fprintf(stderr, color_blue  ("[" DATA_FORMAT "]\t"), p->val);
+        else if(p == list->prev) fprintf(stderr, color_purple("[" DATA_FORMAT "]\t"), p->val);
+        else                     fprintf(stderr, color_green ("[" DATA_FORMAT "]\t"), p->val);
+    }
+
+    fprintf(stderr, "\n\n");
+}
+static void ListNextDump(List_t *list)
+{
+    fprintf(stderr, "NEXT:\t");
+    fprintf(stderr, color_red("[%p]\t"), list->next);
+
+    for(List_t *p = list->next; p != list; p = p->next)
+    {
+        ASSERT(p, return);
+             if(p == list->next) fprintf(stderr, color_blue  ("[%p]\t"), p->next);
+        else if(p == list->prev) fprintf(stderr, color_purple("[%p]\t"), p->next);
+        else                     fprintf(stderr, color_green ("[%p]\t"), p->next);
+    }
+
+    fprintf(stderr, "\n\n");
+}
+static void ListPrevDump(List_t *list)
+{
+    fprintf(stderr, "PREV:\t");
+    fprintf(stderr, color_red("[%p]\t"), list->prev);
+
+    for(List_t *p = list->next; p != list; p = p->next)
+    {
+        ASSERT(p, return);
+             if(p == list->next) fprintf(stderr, color_blue  ("[%p]\t"), p->prev);
+        else if(p == list->prev) fprintf(stderr, color_purple("[%p]\t"), p->prev);
+        else                     fprintf(stderr, color_green ("[%p]\t"), p->prev);
+    }
+
+    fprintf(stderr, "\n\n");
+}
+
+void ListDump(List_t *const list)
 {
     ASSERT(list, return);
 
-    fprintf(stderr, "LIST[%p]:\n", list);
+    fprintf(stderr, "LIST[%p]:\n\t", list);
 
-#define DUMP_COLORED(format, iterator, val) for(List_t *iterator = list->next; iterator != list; iterator = iterator->next)\
-                                            {\
-                                                ASSERT(iterator, return);\
-                                                     if(iterator == list->next) fprintf(stderr, color_blue  (format), val);\
-                                                else if(iterator == list->prev) fprintf(stderr, color_purple(format), val);\
-                                                else                            fprintf(stderr, color_green (format), val);\
-                                            }\
-                                            fprintf(stderr, "\n\n");
+    ListIndexDump(list);
 
-    fprintf(stderr, color_red("\t %p \t"), list);
-    DUMP_COLORED(" %p \t", iterator, iterator);
+    ListValDump(list);
 
-    fprintf(stderr, "DATA:");
-    fprintf(stderr, color_red("\t[" DTS "]\t"), list->val);
-    DUMP_COLORED("[" DTS "]\t", iterator, iterator->val);
+    ListNextDump(list);
 
-    fprintf(stderr, "NEXT:");
-    fprintf(stderr, color_red("\t[%4p]\t"), list->next);
-    DUMP_COLORED("[%p]\t", iterator, iterator->next);
-
-    fprintf(stderr, "PREV:");
-    fprintf(stderr, color_red("\t[%p]\t"), list->prev);
-    DUMP_COLORED("[%p]\t", iterator, iterator->prev);
-#undef DUMP_COLORED
+    ListPrevDump(list);
 }
 
 #ifdef PROTECT
-int ListVer(List_t *const list)
+bool IsListValid(List_t *const list)
 {
-    ASSERT(list                 , return EXIT_FAILURE);
-    ASSERT(list->val == DATA_MAX, return EXIT_FAILURE);
-    ASSERT(list->next           , return EXIT_FAILURE);
+    ASSERT(list                 , return false);
+    ASSERT(list->val == DATA_MAX, return false);
+    ASSERT(list->next           , return false);
 
     for(List_t *i = list->next; i != list; i = i->next)
     {
-        ASSERT(i->next           , return EXIT_FAILURE);
-        ASSERT(i->next->prev == i, return EXIT_FAILURE);
+        ASSERT(i->next           , return false);
+        ASSERT(i->next->prev == i, return false);
     }
 
-    return EXIT_SUCCESS;
+    return true;
 }
 
 bool InList(List_t *const list, List_t *const elem)
 {
-    LIST_VER(list, false);
+    LIST_VERIFICATION(list, false);
 
     ASSERT(elem, return false);
 
     if(list == elem) return true;
+
     for(List_t *i = ListTail(list); i != list; i = i->next)
+    {
         if(i == elem) return true;
+    }
+
     return false;
 }
 #endif
