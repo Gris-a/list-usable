@@ -48,7 +48,7 @@ List ListCtor(const size_t capasity = 2);
 
 int ListDtor(List *list);
 
-ssize_t ListHead(List *list);
+size_t ListHead(List *list);
 
 size_t ListTail(List *list);
 
@@ -60,7 +60,7 @@ size_t ListSearch(List *const list, const data_t val);
 
 size_t GetPos(List *const list, const size_t ord_pos);
 
-void ListDump(List *list, const char *const file, const char *const func, const int line);
+void ListDump(List *list, const char *file, const char *func, const int line);
 
 #ifdef PROTECT
 int ListVer(List *const list);

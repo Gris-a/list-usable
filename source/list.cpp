@@ -41,11 +41,11 @@ int ListDtor(List *list)
 }
 
 
-ssize_t ListHead(List *list)
+size_t ListHead(List *list)
 {
-    LIST_VER(list, EOF);
+    LIST_VER(list, ULLONG_MAX);
 
-    return list->data[0].prev;
+    return (size_t)list->data[0].prev;
 }
 
 size_t ListTail(List *list)
@@ -157,6 +157,15 @@ size_t GetPos(List *const list, const size_t ord_pos)
 }
 
 
+static void MakeDumpDir(void)
+{
+    system("rm -rf dump_list");
+    system("mkdir dump_list");
+    system("mkdir dump_list/img");
+    system("mkdir dump_list/source");
+    system("mkdir dump_list/html");
+}
+
 static void ListText(List *const list, const char *path, const char *file, const char *func, const int line, const int img_num) //TODO cringe
 {
     ASSERT(file && func, return);
@@ -171,7 +180,8 @@ static void ListText(List *const list, const char *path, const char *file, const
                               "\tcapacity:%5zu,\n"
                               "\n"), list, list->size, list->capacity);
 
-    ASSERT(list->data, return);
+    ASSERT(list->data, fclose(html);
+                       return);
 
     fprintf(html, color_red("\t[      NULL]\t"));
     for(size_t i = 1; i <= list->capacity; i++)
@@ -184,13 +194,13 @@ static void ListText(List *const list, const char *path, const char *file, const
     fprintf(html, "\n\n\t");
 
 #define DUMP_COLORED(format, iterator, val) for(size_t iterator = 1; iterator <= list->capacity; iterator++)\
-                                            {\
-                                                     if(iterator ==         list->data[0].next) fprintf(html, color_blue  (format), val);\
-                                                else if(iterator == (size_t)list->data[0].prev) fprintf(html, color_purple(format), val);\
-                                                else if(list->data[iterator].prev == EOF      ) fprintf(html, color_yellow(format), val);\
-                                                else                                            fprintf(html, color_green (format), val);\
-                                            }\
-                                            fprintf(html, "\n\n");
+                                        {\
+                                                 if(iterator ==         list->data[0].next) fprintf(html, color_blue  (format), val);\
+                                            else if(iterator == (size_t)list->data[0].prev) fprintf(html, color_purple(format), val);\
+                                            else if(list->data[iterator].prev == EOF      ) fprintf(html, color_yellow(format), val);\
+                                            else                                            fprintf(html, color_green (format), val);\
+                                        }\
+                                        fprintf(html, "\n\n");
 
     fprintf(html, color_red(" %10d \t"), 0);
     DUMP_COLORED(" %10zu \t", iterator, iterator);
@@ -208,13 +218,15 @@ static void ListText(List *const list, const char *path, const char *file, const
     DUMP_COLORED("[%10zd]\t", iterator, list->data[iterator].prev);
 #undef DUMP_COLORED
 
-    fprintf(html, "<img src=\"../img/list_dump%d.png\"/></body>", img_num);
+    fprintf(html, "<img src=\"../img/list_dump%d.png\"/>", img_num);
 
     fclose(html);
 }
 
-static void ListDot(List *list, const char *const path)
+static void ListDot(List *list, char *path, const int img_num)
 {
+    ASSERT(list->data, return);
+
     FILE *graph = fopen(path, "wb");
     ASSERT(graph, return);
 
@@ -258,25 +270,26 @@ static void ListDot(List *list, const char *const path)
     fprintf(graph, "}\n");
 
     fclose(graph);
+
+    sprintf(path, "dot dump_list/source/list_dump%d.dot -T png -o dump_list/img/list_dump%d.png", img_num, img_num);
+    system(path);
 }
 
-void ListDump(List *list, const char *const file, const char *const func, const int line)
+void ListDump(List *list, const char *file, const char *func, const int line)
 {
     static int num = 0;
 
-    ASSERT(list && list->data, return);
+    ASSERT(list, return);
+
+    if(num == 0) MakeDumpDir();
 
     char path[MAX_CMD_LEN] = {};
 
-    sprintf(path, "dump/source/list_dump%d.dot", num);
-    ListDot(list, path);
-
-    sprintf(path, "dump/html/list_dump%d.html", num);
-
+    sprintf(path, "dump_list/html/list_dump%d.html", num);
     ListText(list, path, file, func, line, num);
 
-    sprintf(path, "dot dump/source/list_dump%d.dot -T png -o dump/img/list_dump%d.png", num, num);
-    system(path);
+    sprintf(path, "dump_list/source/list_dump%d.dot", num);
+    ListDot(list, path, num);
 
     num++;
 }
