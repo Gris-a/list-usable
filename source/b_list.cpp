@@ -27,6 +27,7 @@ int ListDtor(List_t *list)
     return EXIT_SUCCESS;
 }
 
+
 List_t *ListHead(List_t *list)
 {
     LIST_VERIFICATION(list, NULL);
@@ -40,6 +41,7 @@ List_t *ListTail(List_t *list)
 
     return list->next;
 }
+
 
 List_t *ListAppend(struct List_t *list, List_t *prev_p, const data_t val)
 {
@@ -61,6 +63,7 @@ List_t *ListAppend(struct List_t *list, List_t *prev_p, const data_t val)
     return elem;
 }
 
+
 int ListDelete(List_t *list, List_t *del_p, data_t *val)
 {
     LIST_VERIFICATION(list, EXIT_FAILURE);
@@ -78,6 +81,7 @@ int ListDelete(List_t *list, List_t *del_p, data_t *val)
 
     return EXIT_SUCCESS;
 }
+
 
 List_t *ListSearch(List_t *const list, const data_t val)
 {
@@ -107,6 +111,7 @@ List_t *GetPos(struct List_t *const list, const size_t ord_pos)
     return pos;
 }
 
+
 static void ListIndexDump(List_t *list)
 {
     fprintf(stderr, color_red(" %p \t"), list);
@@ -119,6 +124,7 @@ static void ListIndexDump(List_t *list)
         else                     fprintf(stderr, color_green (" %p \t"), p);
     }
 }
+
 static void ListValDump(List_t *list)
 {
     fprintf(stderr, "DATA:\t");
@@ -132,6 +138,7 @@ static void ListValDump(List_t *list)
         else                     fprintf(stderr, color_green ("[" DATA_FORMAT "]\t"), p->val);
     }
 }
+
 static void ListNextDump(List_t *list)
 {
     fprintf(stderr, "NEXT:\t");
@@ -145,6 +152,7 @@ static void ListNextDump(List_t *list)
         else                     fprintf(stderr, color_green ("[%p]\t"), p->next);
     }
 }
+
 static void ListPrevDump(List_t *list)
 {
     fprintf(stderr, "PREV:\t");
