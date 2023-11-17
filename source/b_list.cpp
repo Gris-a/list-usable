@@ -118,8 +118,6 @@ static void ListIndexDump(List_t *list)
         else if(p == list->prev) fprintf(stderr, color_purple(" %p \t"), p);
         else                     fprintf(stderr, color_green (" %p \t"), p);
     }
-
-    fprintf(stderr, "\n\n");
 }
 static void ListValDump(List_t *list)
 {
@@ -133,8 +131,6 @@ static void ListValDump(List_t *list)
         else if(p == list->prev) fprintf(stderr, color_purple("[" DATA_FORMAT "]\t"), p->val);
         else                     fprintf(stderr, color_green ("[" DATA_FORMAT "]\t"), p->val);
     }
-
-    fprintf(stderr, "\n\n");
 }
 static void ListNextDump(List_t *list)
 {
@@ -148,8 +144,6 @@ static void ListNextDump(List_t *list)
         else if(p == list->prev) fprintf(stderr, color_purple("[%p]\t"), p->next);
         else                     fprintf(stderr, color_green ("[%p]\t"), p->next);
     }
-
-    fprintf(stderr, "\n\n");
 }
 static void ListPrevDump(List_t *list)
 {
@@ -163,8 +157,6 @@ static void ListPrevDump(List_t *list)
         else if(p == list->prev) fprintf(stderr, color_purple("[%p]\t"), p->prev);
         else                     fprintf(stderr, color_green ("[%p]\t"), p->prev);
     }
-
-    fprintf(stderr, "\n\n");
 }
 
 void ListDump(List_t *const list)
@@ -174,12 +166,16 @@ void ListDump(List_t *const list)
     fprintf(stderr, "LIST[%p]:\n\t", list);
 
     ListIndexDump(list);
+    fprintf(stderr, "\n\n");
 
     ListValDump(list);
+    fprintf(stderr, "\n\n");
 
     ListNextDump(list);
+    fprintf(stderr, "\n\n");
 
     ListPrevDump(list);
+    fprintf(stderr, "\n\n");
 }
 
 #ifdef PROTECT
