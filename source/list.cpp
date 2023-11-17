@@ -109,7 +109,7 @@ int ListDelete(List *list, const size_t id, data_t *val)
 {
     LIST_VER(list, EXIT_FAILURE);
 
-    ASSERT(id != 0 && id <= list->capacity && list->data[id].prev != EOF, return EXIT_FAILURE);
+    ASSERT(0 != id && id <= list->capacity && list->data[id].prev != EOF, return EXIT_FAILURE);
 
     if(val) *val = list->data[id].val;
 
@@ -215,6 +215,7 @@ static void ListTextDump(List *const list, const char *path, const char *file, c
     fprintf(html, color_white("PREV:\t"));
     fprintf(html, color_red("[%10zd]\t"), list->data[0].prev);
     DUMP_COLORED("[%10zd]\t", iterator, list->data[iterator].prev);
+
 #undef DUMP_COLORED
 
     fprintf(html, "<img src=\"../img/list_dump%d.png\"/>", img_num);
@@ -236,11 +237,9 @@ void ListDot(List *list, const char *path)
                    "ranksep = equally   \n"
                    "node[shape = Mrecord; style=filled; fillcolor=\"gray\"];\n");
 
-    fprintf(graph, "nodel[label = \"free: %zu|{head: %zd|tail: %zu}|{size: %zu|capacity: %zu}\"; fillcolor = \"orchid\"]\n", list->free,
-                                                                                                                             list->data[0].prev,
-                                                                                                                             list->data[0].next,
-                                                                                                                             list->size,
-                                                                                                                             list->capacity);
+    fprintf(graph, "nodel[label = \"free: %zu|{head: %zd|tail: %zu}|{size: %zu|capacity: %zu}\"; fillcolor = \"orchid\"]\n",
+                                            list->free, list->data[0].prev, list->data[0].next, list->size, list->capacity);
+
     for(size_t i = 0; i <= list->capacity; i++)
     {
         fprintf(graph, "node%zu[label = \"<prev> p:%zd | <id> id: %zu | <val> val: " DTS " | <next> n:%zu\"];\n", i,
