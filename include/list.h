@@ -30,8 +30,7 @@ struct List
     size_t size;
 };
 
-#define LIST_DUMP(list_ptr) LOG("Called from %s:%s:%d:\n", __FILE__, __PRETTY_FUNCTION__, __LINE__);\
-                            ListDump(list_ptr, __FILE__, __PRETTY_FUNCTION__, __LINE__)
+#define LIST_DUMP(list_ptr) ListDump(list_ptr, __FILE__, __PRETTY_FUNCTION__, __LINE__)
 
 #ifdef PROTECT
 #define LIST_VER(list_ptr, ret_val_on_fail) if(ListVer(list_ptr))\
@@ -59,6 +58,8 @@ int ListDelete(List *list, const size_t id, data_t *val = NULL);
 size_t ListSearch(List *const list, const data_t val);
 
 size_t GetPos(List *const list, const size_t ord_pos);
+
+void ListDot(List *list, const char *path);
 
 void ListDump(List *list, const char *file, const char *func, const int line);
 

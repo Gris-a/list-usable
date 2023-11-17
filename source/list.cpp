@@ -162,11 +162,10 @@ static void MakeDumpDir(void)
     system("rm -rf dump_list");
     system("mkdir dump_list");
     system("mkdir dump_list/img");
-    system("mkdir dump_list/source");
     system("mkdir dump_list/html");
 }
 
-static void ListText(List *const list, const char *path, const char *file, const char *func, const int line, const int img_num) //TODO cringe
+static void ListTextDump(List *const list, const char *path, const char *file, const char *func, const int line, const int img_num) //TODO cringe
 {
     ASSERT(file && func, return);
 
@@ -223,11 +222,12 @@ static void ListText(List *const list, const char *path, const char *file, const
     fclose(html);
 }
 
-static void ListDot(List *list, char *path, const int img_num)
+void ListDot(List *list, const char *path)
 {
-    ASSERT(list->data, return);
+    ASSERT(list && list->data, return);
+    ASSERT(path              , return);
 
-    FILE *graph = fopen(path, "wb");
+    FILE *graph = fopen("list.dot", "wb");
     ASSERT(graph, return);
 
     fprintf(graph, "digraph             \n"
@@ -271,8 +271,11 @@ static void ListDot(List *list, char *path, const int img_num)
 
     fclose(graph);
 
-    sprintf(path, "dot dump_list/source/list_dump%d.dot -T png -o dump_list/img/list_dump%d.png", img_num, img_num);
-    system(path);
+    char sys_cmd[MAX_CMD_LEN] = {};
+    sprintf(sys_cmd, "dot list.dot -T png -o %s", path);
+    system(sys_cmd);
+
+    remove("list.dot");
 }
 
 void ListDump(List *list, const char *file, const char *func, const int line)
@@ -286,10 +289,10 @@ void ListDump(List *list, const char *file, const char *func, const int line)
     char path[MAX_CMD_LEN] = {};
 
     sprintf(path, "dump_list/html/list_dump%d.html", num);
-    ListText(list, path, file, func, line, num);
+    ListTextDump(list, path, file, func, line, num);
 
-    sprintf(path, "dump_list/source/list_dump%d.dot", num);
-    ListDot(list, path, num);
+    sprintf(path, "dump_list/img/list_dump%d.png", num);
+    ListDot(list, path);
 
     num++;
 }
