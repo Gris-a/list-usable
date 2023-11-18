@@ -5,7 +5,12 @@
 
 List ListCtor(const size_t capacity)
 {
-    ASSERT(capacity, return {});
+    if(capacity == 0)
+    {
+        LOG("Capacity should be greater than zero.\n");
+
+        return {};
+    }
 
     List list = {};
 
@@ -18,6 +23,7 @@ List ListCtor(const size_t capacity)
     ASSERT(list.data, return {});
 
     list.data[0].val = DATA_MAX;
+
     for(size_t i = 1; i <= capacity; i++)
     {
         list.data[i].next = i + 1;
@@ -34,7 +40,7 @@ int ListDtor(List *list)
     free(list->data);
     list->data = NULL;
 
-    list->size     = ULLONG_MAX;
+    list->size     = 0;
     list->capacity = 0;
     list->free     = 0;
 
@@ -99,9 +105,9 @@ size_t ListAppend(List *list, const size_t id, const data_t val)
 
     list->size++;
 
-    EXEC_ASSERT(ExpandList(list) == EXIT_SUCCESS, return 0);
+    int exit_status = ExpandList(list);
 
-    return free;
+    return ((exit_status == EXIT_SUCCESS) ? free : 0);
 }
 
 
@@ -109,9 +115,11 @@ int ListDelete(List *list, const size_t id, data_t *val)
 {
     LIST_VERIFICATION(list, EXIT_FAILURE);
 
-    ASSERT(id != 0 && id <= list->capacity && list->data[id].prev != EOF, return EXIT_FAILURE);
+    ASSERT(id <= list->capacity && list->data[id].prev != EOF, return EXIT_FAILURE);
 
     if(val) *val = list->data[id].val;
+
+    if(id == 0)return ListDtor(list);
 
     list->data[list->data[id].prev].next = list->data[id].next;
     list->data[list->data[id].next].prev = list->data[id].prev;
@@ -170,6 +178,7 @@ static void MakeDumpDir(void)
 static void ListTextLabelDump(List *list, FILE *dest)
 {
     fprintf(dest, color_red("\t[      NULL]\t"));
+
     for(size_t i = 1; i <= list->capacity; i++)
     {
              if(i ==         list->data[0].next) fprintf(dest, color_blue  ("[      TAIL]\t"));
@@ -184,6 +193,7 @@ static void ListTextLabelDump(List *list, FILE *dest)
 static void ListTextIndexDump(List *list, FILE *dest)
 {
     fprintf(dest, color_red(" %10d \t"), 0);
+
     for(size_t i = 1; i <= list->capacity; i++)
     {
              if(i ==         list->data[0].next) fprintf(dest, color_blue  (" %10zu \t"), i);
@@ -259,8 +269,12 @@ static void ListTextDump(List *const list, const char *path, const char *file, c
     fprintf(html, color_white("LIST[%p]:       \n"
                               "\tsize:    %5zu,\n"
                               "\tcapacity:%5zu,\n\n"), list, list->size, list->capacity);
+    if(!list->data)
+    {
+        fclose(html);
 
-    ASSERT(list->data, fclose(html); return);
+        return;
+    }
 
     ListTextLabelDump(list, html);
 
@@ -364,7 +378,7 @@ void ListDump(List *list, const char *file, const char *func, const int line)
 }
 
 #ifdef PROTECT
-static bool IsTailHeadValid(List *const list)
+static bool IsEndsValid(List *const list)
 {
     size_t tail_pos    = 0;
     size_t tails_count = 0;
@@ -434,13 +448,15 @@ static bool IsFreeMemValid(List *const list)
 bool IsListValid(List *const list)
 {
     ASSERT(list && list->data && list->data[0].val == DATA_MAX, return false);
-    ASSERT(list->size <= list->capacity                       , return false);
-    ASSERT(list->capacity <= UINT_MAX && list->capacity != 0  , return false);
-    ASSERT(list->free != 0 && list->free <= list->capacity    , return false);
 
-    EXEC_ASSERT(IsTailHeadValid(list), return false);
-    EXEC_ASSERT(IsCycleValid(list)   , return false);
-    EXEC_ASSERT(IsFreeMemValid(list) , return false);
+    ASSERT(list->capacity <= UINT_MAX && list->capacity != 0, return false);
+    ASSERT(list->size <= list->capacity                     , return false);
+
+    ASSERT(list->free != 0 && list->free <= list->capacity, return false);
+
+    ASSERT(IsEndsValid(list)   , return false);
+    ASSERT(IsCycleValid(list)  , return false);
+    ASSERT(IsFreeMemValid(list), return false);
 
     return true;
 }

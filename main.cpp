@@ -1,11 +1,11 @@
-#include "include/b_list.h"
+#include "include/basic_list.h"
 
 int main(void)
 {
-    List_t list = ListCtor();
-    ListAppend(&list, list.next, 5);
-    ListAppend(&list, list.next, 6);
-    ListAppend(&list, list.next, 7);
+    List list = ListCtor();
+    ListAppend(&list, ListTail(&list), 5);
+    ListAppend(&list, ListTail(&list), 6);
+    ListAppend(&list, ListTail(&list), 7);
     LIST_DUMP(&list);
     ListDtor(&list);
 }
