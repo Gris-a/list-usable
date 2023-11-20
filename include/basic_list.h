@@ -52,8 +52,6 @@ Block *ListAppend(List *list, Block *prev_p, const data_t val);
 
 int ListDelete(List *list, Block *del_p, data_t *val = NULL);
 
-bool InList(struct List *const list, Block *const elem);
-
 Block *ListSearch(List *const list, const data_t val);
 
 Block *GetPos(List *const list, const size_t ord_pos);

@@ -8,7 +8,6 @@ List ListCtor(const size_t capacity)
     if(capacity == 0)
     {
         LOG("Capacity should be greater than zero.\n");
-
         return {};
     }
 
@@ -19,11 +18,9 @@ List ListCtor(const size_t capacity)
     list.free     = 1;
 
     list.data = (Block *)calloc(capacity + 1, sizeof(Block));
-
     ASSERT(list.data, return {});
 
     list.data[0].val = DATA_MAX;
-
     for(size_t i = 1; i <= capacity; i++)
     {
         list.data[i].next = i + 1;
@@ -32,6 +29,7 @@ List ListCtor(const size_t capacity)
 
     return list;
 }
+
 
 int ListDtor(List *list)
 {
@@ -68,7 +66,6 @@ static int ExpandList(List *list)
     if(list->size == list->capacity)
     {
         Block *data_r = (Block *)realloc(list->data, sizeof(Block) * (list->capacity * 2 + 1));
-
         ASSERT(data_r, return EXIT_FAILURE);
 
         list->data = data_r;
@@ -199,7 +196,7 @@ static void ListTextIndexDump(List *list, FILE *dest)
              if(i ==         list->data[0].next) fprintf(dest, color_blue  (" %10zu \t"), i);
         else if(i == (size_t)list->data[0].prev) fprintf(dest, color_purple(" %10zu \t"), i);
         else if(i ==         list->free        ) fprintf(dest, color_yellow(" %10zu \t"), i);
-        else                                     fprintf(dest, "\t\t");
+        else                                     fprintf(dest, color_green (" %10zu \t"), i);
     }
 
     fprintf(dest, "\n\n");
@@ -319,7 +316,6 @@ static void DotEdgesCtor(List *list, FILE *graph)
             {
                 fprintf(graph, "node%zu:<next> -> node%zu:<next>[color = \"orange\"; constraint = false];\n", i, list->data[i].next);
             }
-
             continue;
         }
 
@@ -330,8 +326,9 @@ static void DotEdgesCtor(List *list, FILE *graph)
 
 void ListDot(List *list, const char *png_file_name)
 {
-    ASSERT(list && list->data, return);
-    ASSERT(png_file_name     , return);
+    if(!(list && list->data)) return;
+
+    ASSERT(png_file_name, return);
 
     FILE *graph = fopen("list.dot", "wb");
     ASSERT(graph, return);
@@ -343,7 +340,6 @@ void ListDot(List *list, const char *png_file_name)
                    "node[shape = Mrecord; style=filled; fillcolor=\"gray\"];\n");
 
     DotNodesCtor(list, graph);
-
     DotEdgesCtor(list, graph);
 
     fprintf(graph, "}\n");
@@ -351,7 +347,7 @@ void ListDot(List *list, const char *png_file_name)
     fclose(graph);
 
     char sys_cmd[MAX_STR_LEN] = {};
-    snprintf(sys_cmd, MAX_STR_LEN, "dot list.dot -T png -o %s", png_file_name);
+    sprintf(sys_cmd, "dot list.dot -T png -o %s", png_file_name);
     system(sys_cmd);
 
     remove("list.dot");
@@ -368,10 +364,10 @@ void ListDump(List *list, const char *file, const char *func, const int line)
 
     char path[MAX_STR_LEN] = {};
 
-    snprintf(path, MAX_STR_LEN - 1, "dump_list/html/list_dump%d.html", num);
+    sprintf(path, "dump_list/html/list_dump%d.html", num);
     ListTextDump(list, path, file, func, line, num);
 
-    snprintf(path, MAX_STR_LEN - 1, "dump_list/img/list_dump%d.png", num);
+    sprintf(path, "dump_list/img/list_dump%d.png", num);
     ListDot(list, path);
 
     num++;

@@ -7,7 +7,6 @@ List ListCtor(void)
     List list = {};
 
     list.data = (Block *)calloc(1, sizeof(Block));
-
     ASSERT(list.data, return {});
 
     list.data->val  = DATA_MAX;
@@ -16,6 +15,7 @@ List ListCtor(void)
 
     return list;
 }
+
 
 int ListDtor(List *list)
 {
@@ -52,10 +52,7 @@ Block *ListAppend(struct List *list, Block *prev_p, const data_t val)
 {
     LIST_VERIFICATION(list, NULL);
 
-    ASSERT(InList(list, prev_p), return NULL);
-
     Block *append = (Block *)calloc(1, sizeof(Block));
-
     ASSERT(append, return NULL);
 
     append->val = val;
@@ -76,8 +73,6 @@ int ListDelete(List *list, Block *del_p, data_t *val)
 {
     LIST_VERIFICATION(list, EXIT_FAILURE);
 
-    ASSERT(InList(list, del_p), return EXIT_FAILURE);
-
     if(del_p == list->data) return ListDtor(list);
 
     if(val) *val = del_p->val;
@@ -90,23 +85,6 @@ int ListDelete(List *list, Block *del_p, data_t *val)
     list->size--;
 
     return EXIT_SUCCESS;
-}
-
-
-bool InList(List *const list, Block *const elem)
-{
-    LIST_VERIFICATION(list, false);
-
-    ASSERT(elem, return false);
-
-    if(elem == list->data) return true;
-
-    for(Block *i = ListTail(list); i != list->data; i = i->next)
-    {
-        if(i == elem) return true;
-    }
-
-    return false;
 }
 
 Block *ListSearch(List *const list, const data_t val)
@@ -126,11 +104,9 @@ Block *GetPos(struct List *const list, const size_t ord_pos)
     LIST_VERIFICATION(list, NULL);
 
     Block *pos = ListTail(list);
-
     for(size_t i = 0; i < ord_pos; i++)
     {
         pos = pos->next;
-
         ASSERT(pos != list->data, return NULL);
     }
 
@@ -140,13 +116,14 @@ Block *GetPos(struct List *const list, const size_t ord_pos)
 
 static void ListPointersDump(List *list)
 {
-    fprintf(stderr, color_red("\t %p \t"), list->data);
+    fprintf(stderr, "PTRS:\t");
+    fprintf(stderr, color_red("[%p]\t"), list->data);
 
     for(Block *p = list->data->next; p != list->data && p != NULL; p = p->next)
     {
-             if(p == list->data->next) fprintf(stderr, color_blue  (" %p \t"), p);
-        else if(p == list->data->prev) fprintf(stderr, color_purple(" %p \t"), p);
-        else                           fprintf(stderr, color_green (" %p \t"), p);
+             if(p == list->data->next) fprintf(stderr, color_blue  ("[%p]\t"), p);
+        else if(p == list->data->prev) fprintf(stderr, color_purple("[%p]\t"), p);
+        else                           fprintf(stderr, color_green ("[%p]\t"), p);
     }
 }
 
@@ -191,9 +168,10 @@ static void ListPrevDump(List *list)
 
 void ListDump(List *const list)
 {
-    ASSERT(list, return);
-
     fprintf(stderr, "LIST[%p]:  \n", list);
+
+    if(!list) return;
+
     fprintf(stderr, "\tdata: %p \n"
                     "\tsize: %zu\n", list->data, list->size);
 
