@@ -172,31 +172,16 @@ static void MakeDumpDir(void)
 }
 
 
-static void ListTextLabelDump(List *list, FILE *dest)
-{
-    fprintf(dest, color_red("\t[      NULL]\t"));
-
-    for(size_t i = 1; i <= list->capacity; i++)
-    {
-             if(i ==         list->data[0].next) fprintf(dest, color_blue  ("[      TAIL]\t"));
-        else if(i == (size_t)list->data[0].prev) fprintf(dest, color_purple("[      HEAD]\t"));
-        else if(i ==         list->free        ) fprintf(dest, color_yellow("[      FREE]\t"));
-        else                                     fprintf(dest, "\t\t");
-    }
-
-    fprintf(dest, "\n\n\t");
-}
-
 static void ListTextIndexDump(List *list, FILE *dest)
 {
-    fprintf(dest, color_red(" %10d \t"), 0);
+    fprintf(dest, color_red("\t[NULL:%5d]\t"), 0);
 
     for(size_t i = 1; i <= list->capacity; i++)
     {
-             if(i ==         list->data[0].next) fprintf(dest, color_blue  (" %10zu \t"), i);
-        else if(i == (size_t)list->data[0].prev) fprintf(dest, color_purple(" %10zu \t"), i);
-        else if(i ==         list->free        ) fprintf(dest, color_yellow(" %10zu \t"), i);
-        else                                     fprintf(dest, color_green (" %10zu \t"), i);
+             if(i ==         list->data[0].next) fprintf(dest, color_blue  ("[TAIL:%5zu]\t"), i);
+        else if(i == (size_t)list->data[0].prev) fprintf(dest, color_purple("[HEAD:%5zu]\t"), i);
+        else if(i ==         list->free        ) fprintf(dest, color_yellow("[FREE:%5zu]\t"), i);
+        else                                     fprintf(dest, color_green ("[%10zu]\t"), i);
     }
 
     fprintf(dest, "\n\n");
@@ -263,17 +248,21 @@ static void ListTextDump(List *const list, const char *path, const char *file, c
 
     fprintf(html, "<body bgcolor=\"000000\"><pre>\n");
     fprintf(html, color_white("Called from %s:%s:%d\n\n"), file, func, line);
-    fprintf(html, color_white("LIST[%p]:       \n"
-                              "\tsize:    %5zu,\n"
-                              "\tcapacity:%5zu,\n\n"), list, list->size, list->capacity);
-    if(!list->data)
+    fprintf(html, color_white("LIST[%p]:       \n"), list);
+
+    if(!list)
     {
         fclose(html);
-
         return;
     }
 
-    ListTextLabelDump(list, html);
+    fprintf(html, color_white("\tsize:    %5zu,\n"
+                              "\tcapacity:%5zu,\n\n"), list->size, list->capacity);
+    if(!list->data)
+    {
+        fclose(html);
+        return;
+    }
 
     ListTextIndexDump(list, html);
 
